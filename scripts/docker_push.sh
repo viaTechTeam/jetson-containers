@@ -40,3 +40,7 @@ fi
 if [[ "$CONTAINERS" == "ml" || "$CONTAINERS" == "all" ]]; then
 	push "l4t-ml:r$L4T_VERSION-py3"
 fi
+
+if [[ "$CONTAINERS" == "triton" || "$CONTAINERS" == "tritonserver" ]]; then
+	push "l4t-tritonserver:r$L4T_VERSION"
+fi

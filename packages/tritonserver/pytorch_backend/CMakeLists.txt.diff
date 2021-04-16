@@ -1,0 +1,8 @@
+163,169d162
+<     -lmkl_core
+<     -lmkl_gnu_thread
+<     -lmkl_intel_lp64
+<     -lmkl_avx2
+<     -lmkl_def
+<     -liomp5
+<     -lmkl_intel_thread
