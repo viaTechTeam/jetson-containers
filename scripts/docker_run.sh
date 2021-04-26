@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CONTAINER_IMAGE="nvcr.io/nvidian/nvidia-l4t-base:r32.4"
+CONTAINER_NAME=""
 
 USER_VOLUME=""
 USER_COMMAND=""
@@ -19,6 +20,9 @@ show_help() {
     echo " "
     echo "   -c, --container DOCKER_IMAGE Specifies the name of the Docker container"
     echo "                                image to use (default: 'nvidia-l4t-base')"
+    echo " "
+    echo "   -n, --name INSTANCE_NAME Specifies an explicit name for the container"
+    echo "                            instance to use (default: <random>)" 
     echo " "
     echo "   -v, --volume HOST_DIR:MOUNT_DIR Mount a path from the host system into"
     echo "                                   the container.  Should be specified as:"
@@ -57,8 +61,22 @@ while :; do
         --container=?*)
             CONTAINER_IMAGE=${1#*=} # Delete everything up to "=" and assign the remainder.
             ;;
-        --container=)         # Handle the case of an empty --image=
+        --container=)         # Handle the case of an empty --container=
             die 'ERROR: "--container" requires a non-empty option argument.'
+            ;;
+	   -n|--name)
+            if [ "$2" ]; then
+                CONTAINER_NAME=" --name $2 "
+                shift
+            else
+                die 'ERROR: "--name" requires a non-empty option argument.'
+            fi
+            ;;
+        --name=?*)
+            CONTAINER_NAME=" --name ${1#*=} " # Delete everything up to "=" and assign the remainder.
+            ;;
+        --name=)
+            die 'ERROR: "--name" requires a non-empty option argument.'
             ;;
         -v|--volume)
             if [ "$2" ]; then
@@ -71,7 +89,7 @@ while :; do
         --volume=?*)
             USER_VOLUME=" -v ${1#*=} " # Delete everything up to "=" and assign the remainder.
             ;;
-        --volume=)         # Handle the case of an empty --image=
+        --volume=) 
             die 'ERROR: "--volume" requires a non-empty option argument.'
             ;;
         -r|--run)
@@ -105,5 +123,6 @@ sudo xhost +si:localuser:root
 
 sudo docker run --runtime nvidia -it --rm --network host -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix/:/tmp/.X11-unix \
-    $USER_VOLUME $CONTAINER_IMAGE $USER_COMMAND
+    $CONTAINER_NAME $USER_VOLUME \
+    $CONTAINER_IMAGE $USER_COMMAND
 
