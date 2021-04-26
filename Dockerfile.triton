@@ -46,6 +46,7 @@ RUN apt-get update && \
 			zlib1g-dev \
 			curl \
 			pkg-config \
+			screen \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -96,8 +97,8 @@ COPY packages/tritonserver/pytorch_backend/CMakeLists.txt /tmp/tritonserver/pyto
 RUN cd /tmp && \
     TORCHVISION_VERSION=`pip3 show torchvision | grep Version: | cut -d' ' -f2` && \
     TORCHVISION_COMMIT=`echo $TORCHVISION_VERSION | cut -d'+' -f2` && \
-    TORCHVISION_PATH="/usr/local/lib/python3.6/dist-packages/torchvision-$TORCHVISION_VERSION-py3.6-linux-aarch64.egg" && \
-    PYTORCH_PATH="/usr/local/lib/python3.6/dist-packages/torch" && \
+    TORCHVISION_PATH=`pip3 show torchvision | grep Location: | cut -d' ' -f2`/torchvision && \
+    PYTORCH_PATH=`pip3 show torch | grep Location: | cut -d' ' -f2`/torch && \
     echo "TORCHVISION_VERSION = $TORCHVISION_VERSION" && \
     echo "TORCHVISION_COMMIT  = $TORCHVISION_COMMIT" && \
     echo "TORCHVISION_PATH    = $TORCHVISION_PATH" && \
@@ -107,25 +108,25 @@ RUN cd /tmp && \
     git checkout $TORCHVISION_COMMIT && \
     cd ../ && \
     ln -s /tmp/torchvision/torchvision/csrc /tmp/torchvision/torchvision/torchvision && \
-    ln -s $TORCHVISION_PATH/torchvision/_C.so $TORCHVISION_PATH/torchvision/libtorchvision.so && \
+    ln -s $TORCHVISION_PATH/_C.so $TORCHVISION_PATH/libtorchvision.so && \
     git clone --branch ${TRITON_PYTORCH_BACKEND_VERSION} https://github.com/triton-inference-server/pytorch_backend && \
     cp /tmp/tritonserver/pytorch_backend/CMakeLists.txt /tmp/pytorch_backend/CMakeLists.txt && \
     cd pytorch_backend && \
     mkdir build && \
     cd build && \
-    PYTORCH_PATH="/usr/local/lib/python3.6/dist-packages/torch" && \
-    echo $PYTORCH_PATH && \
     cmake \
 	  -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/install \
 	  -DTRITON_PYTORCH_INCLUDE_PATHS="$PYTORCH_PATH/include;$PYTORCH_PATH/include/torch/csrc/api/include;/tmp/torchvision/torchvision" \
-	  -DTRITON_PYTORCH_LIB_PATHS="$PYTORCH_PATH/lib;$TORCHVISION_PATH/torchvision" \ 
+	  -DTRITON_PYTORCH_LIB_PATHS="$PYTORCH_PATH/lib;$TORCHVISION_PATH" \ 
 	  .. && \
     make -j$(nproc) install && \
     cp -r install/backends/pytorch /opt/tritonserver/backends && \
+    cp $PYTORCH_PATH/lib/libc10* /opt/tritonserver/backends/pytorch && \
+    cp $PYTORCH_PATH/lib/libtorch* /opt/tritonserver/backends/pytorch && \
+    cp $TORCHVISION_PATH/libtorchvision.so /opt/tritonserver/backends/pytorch && \
     cd ../../ && \
     rm -r -f pytorch_backend && \
     rm -r -f torchvision 
-    
     
 # disable JupyterLab from auto-starting (inherited behavior from l4t-ml)
 CMD /bin/bash
