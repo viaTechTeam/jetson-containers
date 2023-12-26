@@ -5,6 +5,7 @@ CONTAINER_IMAGE=""
 ENVIRONMENT=""
 USER_VOLUME=""
 USER_COMMAND=""
+USER_NAME=""
 
 
 show_help() {
@@ -67,7 +68,7 @@ while :; do
         --container=)         # Handle the case of an empty --image=
             die 'ERROR: "--container" requires a non-empty option argument.'
             ;;
-	   -e|--env)
+	    -e|--env)
             if [ "$2" ]; then
                 ENVIRONMENT="$ENVIRONMENT --env $2 "
                 shift
@@ -94,6 +95,14 @@ while :; do
             ;;
         --volume=)
             die 'ERROR: "--volume" requires a non-empty option argument.'
+            ;;
+        -u|--user)
+            if [ "$2" ]; then
+                USER_NAME=" -u $2 "
+                shift
+            else
+                die 'ERROR: "--user" requires a non-empty option argument.'
+            fi
             ;;
         -r|--run)
             if [ "$2" ]; then
@@ -165,5 +174,5 @@ print_var "DISPLAY_DEVICE"
 
 # run the container
 sudo docker run --runtime nvidia -it --rm --network host \
-	$ENVIRONMENT $DISPLAY_DEVICE $V4L2_DEVICES \
+	$USER_NAME $ENVIRONMENT $DISPLAY_DEVICE $V4L2_DEVICES \
 	$USER_VOLUME $CONTAINER_IMAGE $USER_COMMAND
