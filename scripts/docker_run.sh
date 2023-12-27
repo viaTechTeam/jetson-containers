@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CONTAINER_IMAGE=""
+CONTAINER_NAME=""
 
 ENVIRONMENT=""
 USER_VOLUME=""
@@ -104,6 +105,14 @@ while :; do
                 die 'ERROR: "--user" requires a non-empty option argument.'
             fi
             ;;
+        -n|--name)
+            if [ "$2" ]; then
+                CONTAINER_NAME=" --name $2"
+                shift
+            else
+                die 'ERROR: "--name" requires a non-empty option argument.'
+            fi
+            ;;
         -r|--run)
             if [ "$2" ]; then
                 shift
@@ -175,4 +184,4 @@ print_var "DISPLAY_DEVICE"
 # run the container
 sudo docker run --runtime nvidia -it --rm --network host \
 	$USER_NAME $ENVIRONMENT $DISPLAY_DEVICE $V4L2_DEVICES \
-	$USER_VOLUME $CONTAINER_IMAGE $USER_COMMAND
+	$USER_VOLUME $CONTAINER_NAME $CONTAINER_IMAGE $USER_COMMAND
